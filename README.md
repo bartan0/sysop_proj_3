@@ -1,4 +1,6 @@
-Magazyn danych dowolnej wielkości oparty na stronicowaniu
+# Systemy operacyjne - projekt #3
+
+## Magazyn danych dowolnej wielkości oparty na stronicowaniu
 
 Celem projektu jest stworzenie biblioteki zapewniającej magazyn danych, w którym
 program korzystający z biblioteki ma możliwość przechowywania (zapisywania i
