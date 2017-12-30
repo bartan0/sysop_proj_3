@@ -1,33 +1,39 @@
-dir_include = ./include/
-dir_src = ./src/
-dir_obj = ./obj/
+dir_include = ./include
+dir_src = ./src
+dir_obj = ./obj
 
 c = g++
-c_opt = -std=c++11 -Wall -Werror -Wpedantic -I$(dir_include) -DDEBUG
-l_opt =
+c_opt = -Wall -Wpedantic -Werror -I$(dir_include)
+l_opt = 
 
-all: x
+out = main
+obj = $(addprefix $(dir_obj)/, main.o storage.o)
 
-x: $(dir_obj)main.o $(dir_obj)storage.o $(dir_obj)debug.o
-	$(c) $(l_opt) -ox $(dir_obj)storage.o $(dir_obj)debug.o $(dir_obj)main.o
+main_src = $(addprefix $(dir_src)/, main.cpp)
+main_h = $(addprefix $(dir_include)/, storage.hpp)
+storage_src = $(addprefix $(dir_src)/, storage.cpp)
+storage_h = $(addprefix $(dir_include)/, storage.hpp)
 
-$(dir_obj)main.o: $(dir_src)main.cpp $(dir_include)storage.hpp \
-$(dir_include)debug.hpp
-	$(c) -c $(c_opt) -o$(dir_obj)main.o $(dir_src)main.cpp
+.PHONY: all run clean distclean rebuild
 
-$(dir_obj)storage.o: $(dir_src)storage.cpp $(dir_include)storage.hpp
-	$(c) -c $(c_opt) -o$(dir_obj)storage.o $(dir_src)storage.cpp
-
-$(dir_obj)debug.o: $(dir_src)debug.cpp $(dir_include)debug.hpp
-	$(c) -c $(c_opt) -o$(dir_obj)debug.o $(dir_src)debug.cpp
-
-clean:
-	rm -rfv obj/*
-
-distclean: clean
-	rm -rfv x
-
-rebuild: distclean all
+all: $(out)
 
 run: all
-	./x
+	./main
+
+clean:
+	@rm -rfv $(dir_obj)/*
+
+distclean: clean
+	@rm -rfv $(out)
+
+rebuild: distclean
+	@make all
+
+$(out): $(obj)
+	$(c) $(l_opt) -o$@ $^
+
+.SECONDEXPANSION:
+
+$(obj): $(dir_obj)/%.o: $$(%_src) $$(%_h)
+	$(c) -c $(c_opt) -o$@ $(^:%.hpp=)

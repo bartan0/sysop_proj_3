@@ -2,4 +2,4 @@ info
 .*
 !.gitignore
 *.o
-x
+main

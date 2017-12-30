@@ -1,14 +1,11 @@
+#include <cstring>
 #include <iostream>
 #include <string>
-#include <vector>
 
 #include "storage.hpp"
-#include "debug.hpp"
 
-int main()
-{
-	Storage storage(8);
-	// std::vector<storage_item> allocs;
+int main() {
+	Storage storage(4, 4, 8);
 
 	std::string word;
 	while (true) {
@@ -17,14 +14,28 @@ int main()
 		if (std::cin.eof())
 			break;
 
-		if (word == "alloc") {
-			size_t size;
-			std::cin >> size;
-			storage.alloc(size);
-		} else if (word == "free") {
-			storage_item item;
-			std::cin >> item;
-			storage.free(item);
+		if (word == "read") {
+			size_t i_page, pos, len;
+			std::cin >> i_page >> pos >> len;
+			uint8_t *buffer = new uint8_t[len];
+
+			if (storage.modify(i_page, buffer, pos, len))
+				std::cout << "error\n";
+			else
+				std::cout << buffer << "\n";
+			delete[] buffer;
+		} else if (word == "write") {
+			size_t i_page, pos;
+			std::string data;
+			std::cin >> i_page >> pos >> data;
+			uint8_t *buffer = new uint8_t[data.length()];
+			std::memcpy(buffer, data.data(), data.length());
+
+			if (storage.modify(i_page, buffer, pos, data.length(), true))
+				std::cout << "error\n";
+			delete[] buffer;
+		} else if (word == "dump") {
+			storage.dump();
 		}
 	}
 

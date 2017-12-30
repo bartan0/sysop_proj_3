@@ -3,40 +3,40 @@
 
 #include <cstdint>
 #include <cstddef>
-#include <unordered_map>
 
-#include "config.hpp"
-
-typedef int storage_item;
-struct PageMapEntry {
-	size_t i_page;
-	PageMapEntry *next;
+struct Page {
+	bool used = false;
+	bool in_prim = false;
+	size_t i_prim;
 };
-typedef std::unordered_map<storage_item, PageMapEntry*> PageMap;
 
 class Storage {
 	private:
-		size_t page_size, n_pages_prim, n_pages_sec;
-		uint8_t *storage_prim, *storage_sec;
+		const size_t page_size, n_pages_prim, n_pages_sec;
+		uint8_t *memory_prim, *memory_sec;
 
-		PageMap page_map;
-		bool *pages_used;
+		Page *page_table;
+		size_t *is_pages_prim;
 
-		size_t n_pages_used;
-		size_t i_next_item;
-		size_t i_free_page;
+		size_t i_swap;
 
 	public:
-		Storage(
-			size_t page_size = DEFAULT_PAGE_SIZE,
-			size_t n_pages_prim = DEFAULT_N_PAGES_PRIM,
-			size_t n_pages_sec = DEFAULT_N_PAGES_SEC
-		);
+		Storage(size_t page_size, size_t n_pages_prim, size_t n_pages_sec);
 		~Storage();
 
+	private:
+		// i_page - index of page to be brought into primary memory
+		void swap(size_t i_page);
+
 	public:
-		storage_item alloc(size_t size);
-		void free(storage_item);
+		int modify(
+			size_t i_page, uint8_t *buffer,
+			size_t pos, size_t len,
+			bool write = false
+		);
+
+	public:
+		void dump() const;
 };
 
 #endif // _STORAGE_HPP

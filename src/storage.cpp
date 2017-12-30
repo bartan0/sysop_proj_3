@@ -1,7 +1,10 @@
 #include <cstdint>
+#include <cstddef>
+#include <cstring>
+
+#include <iostream>
 
 #include "storage.hpp"
-#include "debug.hpp"
 
 Storage::Storage(
 	size_t page_size,
@@ -11,74 +14,95 @@ Storage::Storage(
 	page_size(page_size),
 	n_pages_prim(n_pages_prim),
 	n_pages_sec(n_pages_sec),
-	n_pages_used(0),
-	i_next_item(1),
-	i_free_page(0)
-{
-	storage_prim = new uint8_t[n_pages_prim*page_size];
-	storage_sec= new uint8_t[n_pages_sec*page_size];
-	pages_used = new bool[n_pages_sec]();
 
-	debug_log("storage: created\n");
-	debug_logf("\tpage_size: %ld\n", page_size);
-	debug_logf("\tn_pages_prim: %ld\n", n_pages_prim);
-	debug_logf("\tn_pages_sec: %ld\n", n_pages_sec);
+	memory_prim(new uint8_t[n_pages_prim*page_size]),
+	memory_sec(new uint8_t[n_pages_sec*page_size]),
+
+	page_table(new Page[n_pages_sec]()),
+	is_pages_prim(new size_t[n_pages_prim]()),
+
+	i_swap(0)
+{
+	// debug only
+	for (size_t i = 0; i < n_pages_prim*page_size; i++)
+		memory_prim[i] = '_';
+	for (size_t i = 0; i < n_pages_sec*page_size; i++)
+		memory_sec[i] = '_';
 }
 
 Storage::~Storage() {
-	delete[] storage_prim;
-	delete[] storage_sec;
-
-	debug_log("storage: destroyed\n");
+	delete[] memory_prim;
+	delete[] memory_sec;
+	delete[] page_table;
+	delete[] is_pages_prim;
 }
 
-storage_item Storage::alloc(size_t size) {
-	debug_log("storage: allocation request\n");
-	debug_logf("\trequested size [bytes]: %ld\n", size);
-
-	size_t n_pages = size/page_size + ((size%page_size) ? 1 : 0);
-	debug_logf("\trequested size [pages]: %ld\n", n_pages);
-	debug_logf("\t#pages already allocated: %ld\n", n_pages_used);
-	if (n_pages_used + n_pages > n_pages_sec) {
-		debug_log("storage: allocation request failed\n");
-		debug_log("\treason: no free pages\n");
-		return 0;
+void Storage::swap(size_t i_page) {
+	// copy i_swap-th page from primary memory to secondary memory
+	// (if it's used)
+	size_t i_page_sec = is_pages_prim[i_swap];
+	if (page_table[i_page_sec].used) {
+		std::memcpy(
+			memory_sec + i_page_sec*page_size,
+			memory_prim + i_swap*page_size,
+			page_size
+		);
+		page_table[i_page_sec].in_prim = false;
 	}
-	debug_log("storage: allocation request ok\n");
 
-	page_map[i_next_item] = nullptr;
+	// swap-in requested page
+	std::memcpy(
+		memory_prim + i_swap*page_size,
+		memory_sec + i_page*page_size,
+		page_size
+	);
+	is_pages_prim[i_swap] = i_page;
+	page_table[i_page].in_prim = true;
+	page_table[i_page].i_prim = i_swap;
 
-	for (size_t i_page = 0; i_page < n_pages; i_page++) {
-		while (pages_used[i_free_page])
-			i_free_page = (i_free_page + 1)%n_pages_sec;
+	// probably not the right place; debug
+	page_table[i_page].used = true;
 
-		PageMapEntry *pme = new PageMapEntry;
-		pme->i_page = i_free_page;
-		pme->next = page_map[i_next_item];
-		page_map[i_next_item] = pme;
-
-		pages_used[i_free_page] = true;
-
-		debug_logf("\tallocated page #%ld\n", i_free_page);
-	}
-	n_pages_used += n_pages;
-
-	debug_logf("storage: allocated as item #%ld\n", i_next_item);
-	return i_next_item++;
+	// increment i_swap
+	i_swap = (i_swap + 1)%n_pages_prim;
 }
 
-void Storage::free(storage_item item) {
-	debug_log("storage: free request\n");
-	debug_logf("\titem #: %d\n", item);
+int Storage::modify(
+	size_t i_page, uint8_t *buffer, size_t pos, size_t len, bool write
+) {
+	if (pos + len > page_size)
+		return 1;
 
-	PageMapEntry *pme = page_map[item], *tmp;
-	while (pme) {
-		debug_logf("freed page #%ld\n", pme->i_page);
+	if (!page_table[i_page].in_prim)
+		swap(i_page);
 
-		pages_used[pme->i_page] = false;
-		tmp = pme->next;
-		delete pme;
-		pme = tmp;
-		n_pages_used--;
-	}
+	if (write)
+		std::memcpy(
+			memory_prim + page_table[i_page].i_prim*page_size + pos,
+			buffer,
+			len
+		);
+	else
+		std::memcpy(
+			buffer,
+			memory_prim + page_table[i_page].i_prim*page_size + pos,
+			len
+		);
+
+	return 0;
+}
+
+void Storage::dump() const {
+	std::cout << "Page size: " << page_size << "\n";
+	std::cout << "#Pages (primary): " << n_pages_prim << "\n";
+	std::cout << "#Pages (secondary): " << n_pages_sec << "\n\n";
+
+	std::cout << "Primary memory:\n" << memory_prim << "\n";
+	std::cout << "Secondary memory:\n" << memory_sec << "\n";
+
+	std::cout << "Page table:\n";
+	for (size_t i_page = 0; i_page < n_pages_sec; i_page++)
+		std::cout << page_table[i_page].used << " " <<
+			page_table[i_page].in_prim << " " <<
+			page_table[i_page].i_prim << "\n";
 }
