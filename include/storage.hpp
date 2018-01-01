@@ -7,6 +7,7 @@
 
 struct Page {
 	bool used = false;
+	bool old;
 	bool in_prim = false;
 	size_t i_prim;
 };

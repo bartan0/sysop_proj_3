@@ -40,6 +40,19 @@ Storage::~Storage() {
 }
 
 void Storage::swap(size_t i_page) {
+	// clock algorithm
+	while (true) {
+		Page &page = page_table[is_pages_prim[i_swap]];
+		if (!page.used)
+			break;
+		if (page.old)
+			break;
+		else
+			page.old = true;
+
+		i_swap = (i_swap + 1)%n_pages_prim;
+	}
+
 	// copy i_swap-th page from primary memory to secondary memory
 	// (if it's used)
 	size_t i_page_sec = is_pages_prim[i_swap];
@@ -100,6 +113,7 @@ int Storage::modify(
 
 	if (!page_table[i_page].in_prim)
 		swap(i_page);
+	page_table[i_page].old = false;
 
 	if (write)
 		std::memcpy(
@@ -138,7 +152,8 @@ std::ostream &operator<< (std::ostream &stream, const Storage &storage) {
 	for (size_t i_page = 0; i_page < storage.n_pages_sec; i_page++)
 		stream << i_page << ": " <<
 			((storage.page_table[i_page].used) ? "+" : "-") <<
-			((storage.page_table[i_page].in_prim) ? "P " : "S ") <<
+			((storage.page_table[i_page].in_prim) ? "P" : "S") <<
+			((storage.page_table[i_page].old) ? "X " : "  ") <<
 			((storage.page_table[i_page].in_prim) ? 
 				storage.page_table[i_page].i_prim : 0) << "\n";
 
