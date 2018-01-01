@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <iostream>
 
 struct Page {
 	bool used = false;
@@ -18,6 +19,8 @@ class Storage {
 		Page *page_table;
 		size_t *is_pages_prim;
 
+		size_t n_pages_used;
+		size_t i_free;
 		size_t i_swap;
 
 	public:
@@ -29,14 +32,20 @@ class Storage {
 		void swap(size_t i_page);
 
 	public:
+		size_t get_page_size() const;
+
+		size_t alloc();
+		void free(size_t i_page);
+
 		int modify(
 			size_t i_page, uint8_t *buffer,
 			size_t pos, size_t len,
 			bool write = false
 		);
 
-	public:
-		void dump() const;
+	friend std::ostream &operator<< (std::ostream&, const Storage&);
 };
+
+std::ostream &operator<< (std::ostream&, const Storage&);
 
 #endif // _STORAGE_HPP

@@ -1,0 +1,8 @@
+#ifndef _CONFIG_HPP
+#define _CONFIG_HPP
+
+#define DEFAULT_PAGE_SIZE 4
+#define DEFAULT_N_PAGES_PRIM 4
+#define DEFAULT_N_PAGES_SEC 8
+
+#endif // _CONFIG_HPP

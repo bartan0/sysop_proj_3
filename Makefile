@@ -2,24 +2,47 @@ dir_include = ./include
 dir_src = ./src
 dir_obj = ./obj
 
+run_cmd = cat test/test_1 - | ./main 1
+
 c = g++
 c_opt = -Wall -Wpedantic -Werror -I$(dir_include)
 l_opt = 
 
 out = main
-obj = $(addprefix $(dir_obj)/, main.o storage.o)
+obj = $(addprefix $(dir_obj)/, \
+	main.o \
+	storage.o \
+	storage_item.o \
+)
 
-main_src = $(addprefix $(dir_src)/, main.cpp)
-main_h = $(addprefix $(dir_include)/, storage.hpp)
-storage_src = $(addprefix $(dir_src)/, storage.cpp)
-storage_h = $(addprefix $(dir_include)/, storage.hpp)
+main_src = $(addprefix $(dir_src)/, \
+	main.cpp \
+)
+main_h = $(addprefix $(dir_include)/, \
+	config.hpp \
+	storage.hpp \
+	storage_item.hpp \
+)
+storage_src = $(addprefix $(dir_src)/, \
+	storage.cpp \
+)
+storage_h = $(addprefix $(dir_include)/, \
+	storage.hpp \
+)
+storage_item_src = $(addprefix $(dir_src)/, \
+	storage_item.cpp \
+)
+storage_item_h = $(addprefix $(dir_include)/, \
+	storage.hpp \
+	storage_item.hpp \
+)
 
 .PHONY: all run clean distclean rebuild
 
 all: $(out)
 
 run: all
-	./main
+	$(run_cmd)
 
 clean:
 	@rm -rfv $(dir_obj)/*
@@ -36,4 +59,4 @@ $(out): $(obj)
 .SECONDEXPANSION:
 
 $(obj): $(dir_obj)/%.o: $$(%_src) $$(%_h)
-	$(c) -c $(c_opt) -o$@ $(^:%.hpp=)
+	$(c) -c $(c_opt) -o$@ $(filter %.cpp, $^)
