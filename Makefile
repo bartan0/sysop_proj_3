@@ -59,4 +59,5 @@ $(out): $(obj)
 .SECONDEXPANSION:
 
 $(obj): $(dir_obj)/%.o: $$(%_src) $$(%_h)
+	if [ ! -d ./obj ]; then mkdir ./obj; fi
 	$(c) -c $(c_opt) -o$@ $(filter %.cpp, $^)
