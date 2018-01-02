@@ -2,11 +2,11 @@ dir_include = ./include
 dir_src = ./src
 dir_obj = ./obj
 
-run_cmd = cat test/test_1 - | ./main 1
+run_cmd = ./main 4 3 8
 
 c = g++
-c_opt = -Wall -Wpedantic -Werror -I$(dir_include)
-l_opt = 
+c_opt = -std=c++11 -Wall -Wpedantic -Werror -I$(dir_include)
+l_opt = -pthread
 
 out = main
 obj = $(addprefix $(dir_obj)/, \

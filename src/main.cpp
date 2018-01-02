@@ -57,8 +57,12 @@ int main(int argc, const char **argv) {
 		} else if (word == "item-create") {
 			size_t size;
 			std::cin >> size;
-			items[++i_item] = new StorageItem(size, storage);
-			std::cout << i_item << "\n";
+			try {
+				items[++i_item] = new StorageItem(size, storage);
+				std::cout << i_item << "\n";
+			} catch (...) {
+				std::cerr << "error: unable to create an item\n";
+			}
 		} else if (word == "item-delete") {
 			int i;
 			std::cin >> i;
@@ -70,8 +74,13 @@ int main(int argc, const char **argv) {
 			std::cin >> i >> pos >> size;
 
 			uint8_t *buffer = new uint8_t[size];
-			items[i]->read(pos, size, buffer);
-			std::cout << buffer << "\n";
+			if (
+				(items[i] == nullptr) ||
+				items[i]->read(pos, size, buffer)
+			)
+				std::cerr << "error: unable to read item's data\n";
+			else
+				std::cout << buffer << "\n";
 			delete[] buffer;
 		} else if (word == "item-write") {
 			int i;
@@ -81,7 +90,11 @@ int main(int argc, const char **argv) {
 
 			uint8_t *buffer = new uint8_t[size];
 			std::memcpy(buffer, data.data(), size);
-			items[i]->write(pos, size, buffer);
+			if (
+				(items[i] == nullptr) ||
+				items[i]->write(pos, size, buffer)
+			)
+				std::cerr << "error: unable to write item's data\n";
 			delete[] buffer;
 		} else if (word == "item-dump") {
 			int i;

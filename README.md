@@ -14,6 +14,3 @@ Założenia projektowe:
 	* nie wszystkie strony muszą być przechowywane w pamięci głównej - pewna ich
 	liczba może znajdować się w pamięci drugorzędnej
 * biblioteka jest bezpieczna w sensie używania przez wiele wątków danego procesu
-* pamięć drugorzędna realizowana jest przy użyciu pliku
-* dane mogą być przechowywane trwale (zakończenie programu używającego biblioteki
-nie musi oznaczać utraty danych zgromadzonych w magazynie)

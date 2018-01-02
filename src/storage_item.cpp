@@ -11,8 +11,12 @@ StorageItem::StorageItem(size_t size, Storage &storage) :
 	n_pages = size/page_size + ((size%page_size) ? 1 : 0);
 
 	is_pages = new size_t[n_pages];
-	for (size_t i_page = 0; i_page < n_pages; i_page++)
-		is_pages[i_page] = storage.alloc();
+	for (size_t i_page = 0; i_page < n_pages; i_page++) {
+		size_t i = storage.alloc();
+		if (i == storage.get_n_pages())
+			throw "error: unable to allocate page";
+		is_pages[i_page] = i;
+	}
 }
 
 StorageItem::~StorageItem() {
@@ -21,13 +25,11 @@ StorageItem::~StorageItem() {
 	delete[] is_pages;
 }
 
-void StorageItem::access(size_t pos, size_t len, uint8_t *buffer,
+int StorageItem::access(size_t pos, size_t len, uint8_t *buffer,
 	bool write
 ) {
-	if (pos + len > size) {
-		// throw?
-		return;
-	}
+	if (pos + len > size)
+		return 1;
 
 	size_t page_size = storage.get_page_size();
 
@@ -42,16 +44,18 @@ void StorageItem::access(size_t pos, size_t len, uint8_t *buffer,
 		pos = 0;
 		len -= l;
 	}
+
+	return 0;
 }
 
 size_t StorageItem::get_size() const
 	{return size;}
 
-void StorageItem::read(size_t pos, size_t len, uint8_t *buffer)
-	{access(pos, len, buffer, false);}
+int StorageItem::read(size_t pos, size_t len, uint8_t *buffer)
+	{return access(pos, len, buffer, false);}
 
-void StorageItem::write(size_t pos, size_t len, uint8_t *buffer)
-	{access(pos, len, buffer, true);}
+int StorageItem::write(size_t pos, size_t len, uint8_t *buffer)
+	{return access(pos, len, buffer, true);}
 
 std::ostream &operator<< (std::ostream &stream, const StorageItem &item) {
 	stream << "Size: " << item.size << "; ";

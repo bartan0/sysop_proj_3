@@ -19,13 +19,13 @@ class StorageItem {
 		~StorageItem();
 
 	private:
-		void access(size_t pos, size_t len, uint8_t *buffer, bool write);
+		int access(size_t pos, size_t len, uint8_t *buffer, bool write);
 
 	public:
 		size_t get_size() const;
 
-		void read(size_t pos, size_t len, uint8_t *buffer);
-		void write(size_t pos, size_t len, uint8_t *buffer);
+		int read(size_t pos, size_t len, uint8_t *buffer);
+		int write(size_t pos, size_t len, uint8_t *buffer);
 
 	friend std::ostream &operator<< (std::ostream&, const StorageItem&);
 };

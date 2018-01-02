@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <iostream>
 
+#include <pthread.h>
+
 struct Page {
 	bool used = false;
 	bool old;
@@ -24,6 +26,8 @@ class Storage {
 		size_t i_free;
 		size_t i_swap;
 
+		pthread_rwlock_t lock;
+
 	public:
 		Storage(size_t page_size, size_t n_pages_prim, size_t n_pages_sec);
 		~Storage();
@@ -34,6 +38,7 @@ class Storage {
 
 	public:
 		size_t get_page_size() const;
+		size_t get_n_pages() const;
 
 		size_t alloc();
 		void free(size_t i_page);

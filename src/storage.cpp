@@ -22,6 +22,7 @@ Storage::Storage(
 
 	n_pages_used(0), i_free(0), i_swap(0)
 {
+	pthread_rwlock_init(&lock, nullptr);
 	for (size_t i_page = 0; i_page < n_pages_prim; i_page++)
 		is_pages_prim[i_page] = n_pages_sec;
 
@@ -37,6 +38,8 @@ Storage::~Storage() {
 	delete[] memory_sec;
 	delete[] page_table;
 	delete[] is_pages_prim;
+
+	pthread_rwlock_destroy(&lock);
 }
 
 void Storage::swap(size_t i_page) {
@@ -84,25 +87,36 @@ void Storage::swap(size_t i_page) {
 size_t Storage::get_page_size() const
 	{return page_size;}
 
+size_t Storage::get_n_pages() const
+	{return n_pages_sec;}
+
 size_t Storage::alloc() {
 	if (n_pages_used == n_pages_sec)
-		// throw?
-		return 0;
+		return n_pages_sec;
+
+	pthread_rwlock_wrlock(&lock);
 
 	while (page_table[i_free].used)
 		i_free = (i_free + 1)%n_pages_sec;
 
 	page_table[i_free].used = true;
 	n_pages_used++;
+	size_t out = i_free;
 
-	return i_free;
+	pthread_rwlock_unlock(&lock);
+
+	return out;
 }
 
 void Storage::free(size_t i_page) {
+	pthread_rwlock_wrlock(&lock);
+
 	if (page_table[i_page].used) {
 		page_table[i_page].used = false;
 		n_pages_used--;
 	}
+
+	pthread_rwlock_unlock(&lock);
 }
 
 int Storage::modify(
@@ -110,6 +124,8 @@ int Storage::modify(
 ) {
 	if (pos + len > page_size)
 		return 1;
+
+	pthread_rwlock_wrlock(&lock);
 
 	if (!page_table[i_page].in_prim)
 		swap(i_page);
@@ -127,6 +143,8 @@ int Storage::modify(
 			memory_prim + page_table[i_page].i_prim*page_size + pos,
 			len
 		);
+
+	pthread_rwlock_unlock(&lock);
 
 	return 0;
 }
